@@ -1,1 +1,1 @@
-azure-powerscript-management-scripts
+azure-powershell-management-scripts
