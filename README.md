@@ -1,2 +1,2 @@
-azure-ps
+azure-powerscript-management-files
 ========
