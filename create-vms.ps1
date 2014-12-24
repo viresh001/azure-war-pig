@@ -1,4 +1,8 @@
-﻿$subscriptionName = (Get-AzureSubscription).SubscriptionName
+﻿#unique identifier for VM names
+$miniGuid = [guid]::NewGuid().ToString().Split("-")[0]
+
+#variables
+$subscriptionName = (Get-AzureSubscription).SubscriptionName
 $cloudServiceName = "warpigcloud"
 $storageAccountName = "warpigstorage"
 $imageFamily = "Windows Server 2012 R2 DataCenter"
@@ -6,9 +10,6 @@ $imageName = (Get-AzureVMImage | where {$_.ImageFamily -eq $imageFamily} | sort 
 $vmSize = (Get-AzureRoleSize | where{$_.SupportedByVirtualMachines -eq $true -and  $_.Cores -eq $cores} | select -First 1).InstanceSize
 $location = "West US"
 $cores = 8
-
-#unique identifier for VM name
-$miniGuid = [guid]::NewGuid().ToString().Split("-")[0]
 $vmName = "warpig-" + $miniGuid
 $adminUser = "warpig-admin"
 $password = "Warpig-1@3$"
@@ -50,7 +51,6 @@ Switch -exact ($vmCreateMethod)
   }
   "New-AzureVM"
   {
-    Write-Output $vmSize
     $vmConfig = New-AzureVMConfig -Name $vmName -InstanceSize $vmSize -ImageName $imageName
     $vmConfig | Add-AzureProvisioningConfig -Windows -AdminUsername $adminUser -Password $password
     $vmConfig | Add-AzureDataDisk -CreateNew -DiskSizeInGB $diskSize -DiskLabel $diskLabel -LUN 0
