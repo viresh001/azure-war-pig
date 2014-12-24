@@ -42,6 +42,7 @@ if((Test-AzureName -Service -Name $cloudServiceName) -eq $false)
   New-AzureService $cloudServiceName -Location $location
 }
 
+#handle different VM creation methods
 Switch -exact ($vmCreateMethod)
 {
   "New-AzureQuickVM"
