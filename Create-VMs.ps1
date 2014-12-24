@@ -11,9 +11,9 @@ $vmSize = (Get-AzureRoleSize | where{$_.SupportedByVirtualMachines -eq $true -an
 $location = "West US"
 $cores = 8
 $vmName = "warpig-" + $miniGuid
+$diskLabel = "warpig-disk-" + $miniGuid
 $adminUser = "warpig-admin"
 $password = "Warpig-1@3$"
-$diskLabel = "warpig-disk-" + $miniGuid
 $diskSize = ((Get-AzureRoleSize | where{$_.InstanceSize -eq $vmSize}).VirtualMachineResourceDiskSizeInMb)/1000
 
 $vmCreateMethod = "New-AzureVM"
