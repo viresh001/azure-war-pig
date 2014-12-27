@@ -202,6 +202,7 @@ Function Execute-RemotePowershell()
 
   $uri = Get-AzureWinRMUri -ServiceName $CloudServiceName -Name $VMName
 
+  #create credential object to log-in automatically
   $secureString = New-Object -TypeName System.Security.SecureString
   $Password.ToCharArray() | ForEach-Object {$secureString.AppendChar($_)}
   $cred = new-object -typename System.Management.Automation.PSCredential -argumentlist $AdminUser, $secureString
@@ -220,15 +221,7 @@ Install-WinRMCertificateForVM -CloudServiceName $cloudServiceName -VMName $vmNam
 
 Execute-RemotePowershell -CloudServiceName $cloudServiceName -VMName $vmName -AdminUser $adminUser -Password $password
 
-#Select-AzureSubscription -SubscriptionName $subscriptionName
 
-
-#Get-AzureVM -ServiceName $cloudServiceName -Name $vmName | Remove-AzureDataDisk -LUN 1 | Update-AzureVM
-#Remove-AzureDisk -DiskName $diskName -DeleteVHD
-
-#Remove-CloudService -CloudServiceName $cloudServiceName
-#Remove-StorageAccount $storageAccountName
-#Remove-AzureDisk -DiskName $diskName -DeleteVHD
 
 
 
