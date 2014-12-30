@@ -207,11 +207,75 @@ Function Execute-RemotePowershell()
   $Password.ToCharArray() | ForEach-Object {$secureString.AppendChar($_)}
   $cred = new-object -typename System.Management.Automation.PSCredential -argumentlist $AdminUser, $secureString
 
+  #install iis through remote powershell
   #Enter-PSSession -ConnectionUri $uri -Credential $cred
   Invoke-Command -ConnectionUri $uri -Credential $cred -ScriptBlock {Install-WindowsFeature -Name "Web-Server" -IncludeAllSubFeature -IncludeManagementTools}
 }
 
+Function Upload-Script()
+{
+  param(
+    [Parameter(Mandatory=$True)]
+    [string] $StorageAccountName,
+
+    [Parameter(Mandatory=$True)]
+    [string] $FileName,
+
+    [Parameter(Mandatory=$True)]
+    [string] $FileLocation,
+
+    [Parameter(Mandatory=$True)]
+    [string] $CointainerName
+  )
+
+  $filePath = Join-Path $FileLocation $FileName
+
+  $storageAccountKey = (Get-AzureStorageKey $StorageAccountName).Primary
+  $context = New-AzureStorageContext -StorageAccountName $StorageAccountName -StorageAccountKey $storageAccountKey
+
+  New-AzureStorageContainer $CointainerName -Permission Container -Context $context
+  Set-AzureStorageBlobContent -Blob $FileName -Container $CointainerName -File $FilePath -Context $context
+}
+
+Function Execute-Script()
+{
+
+  param(
+    [Parameter(Mandatory=$True)]
+    [string] $CloudServiceName,
+
+    [Parameter(Mandatory=$True)]
+    [string] $VMName,
+
+    [Parameter(Mandatory=$True)]
+    [string] $LocalPath,
+
+    [Parameter(Mandatory=$True)]
+    [string] $ScriptName,
+
+
+    [Parameter(Mandatory=$True)]
+    [string] $DiskLabels
+  )
+  $uri =  "http://$StorageAccountName.blob.core.windows.net/$ContainerName/$ScriptName"
+
+  #Get-AzureVM -ServiceName $CloudServiceName -Name $VMName | Stop-AzureVM -Force –StayProvisioned
+
+
+  Export-AzureVM -ServiceName $CloudServiceName -Name $VMName -Path $LocalPath -ErrorAction Stop
+
+  $vmConfig = Import-AzureVM -Path $LocalPath
+
+  $vmConfig | Set-AzureVMCustomScriptExtension -FileUri $uri -Run $ScriptName -Argument $DiskLabels
+
+  $vmConfig | Update-AzureVM -ServiceName $CloudServiceName -Name $VMName
+
+
+}
+
+
 Set-AzureSubscription -SubscriptionName $subscriptionName
+
 Create-StorageAccount -SubscriptionName $subscriptionName -StorageAccountName $storageAccountName -Location $location
 Create-CloudService -CloudServiceName $cloudServiceName -Location $location
 Quick-CreateVM -CloudServiceName $cloudServiceName -VMName $vmName -ImageName $imageName -InstanceSize $vmSize -AdminUsername $adminUser -Password $password
@@ -219,7 +283,13 @@ Add-Disk -CloudServiceName $cloudServiceName -VMName $vmName -DiskName $diskName
 
 Install-WinRMCertificateForVM -CloudServiceName $cloudServiceName -VMName $vmName
 
-Execute-RemotePowershell -CloudServiceName $cloudServiceName -VMName $vmName -AdminUser $adminUser -Password $password
+#Execute-RemotePowershell -CloudServiceName $cloudServiceName -VMName $vmName -AdminUser $adminUser -Password $password
+Remove-CloudService -CloudServiceName $cloudServiceName
+
+
+Upload-Script -StorageAccountName $storageAccountName -FileName "Format-Disks.ps1" -FileLocation "\\vmware-host\Shared Folders\viresh001\azure-war-pig\" -CointainerName "scripts"
+
+Execute-Script $cloudServiceName -VMName $vmName -LocalPath "\\vmware-host\Shared Folders\viresh001\azure-war-pig\vmCfg.xml" -ScriptName "Format-Disks.ps1" -DiskLabels $diskName
 
 
 
